@@ -6,7 +6,8 @@ adding a new "isDone" field as a boolean. The authorization rule below
 specifies that any unauthenticated user can "create", "read", "update", 
 and "delete" any "Todo" records.
 =========================================================================*/
-const schema = a.schema({
+
+/*const schema = a.schema({
   Todo: a
     .model({
       content: a.string(),
@@ -22,6 +23,21 @@ export const data = defineData({
     defaultAuthorizationMode: 'identityPool',
   },
 });
+*/
+import { type ClientSchema, defineData } from '@aws-amplify/backend';
+
+const schema = defineData({
+  schema: (s) => [
+    s.model({
+      content: s.string(),
+      isDone: s.boolean(),
+    }).authorization((allow) => [allow.owner()]), // Only the logged-in user can see their items
+  ],
+});
+
+export type Schema = ClientSchema<typeof schema>;
+export const data = defineData({ schema });
+
 
 /*== STEP 2 ===============================================================
 Go to your frontend source code. From your client-side code, generate a
