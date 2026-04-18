@@ -1,177 +1,167 @@
 import { useState, useEffect } from "react";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { generateClient } from "aws-amplify/data";
-//import { fetchAuthSession } from 'aws-amplify/auth'; // 1. Added this import
+import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import type { Schema } from "../amplify/data/resource";
 import "@aws-amplify/ui-react/styles.css";
-import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth'; // Added fetchUserAttributes
 
 const client = generateClient<Schema>();
 
 export default function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-  const [userGroups, setUserGroups] = useState<string[]>([]); // 2. New state for groups
+  const [userGroups, setUserGroups] = useState<string[]>([]);
+  const [userEmail, setUserEmail] = useState("");
+  const [time, setTime] = useState(new Date());
+  const [currentView, setCurrentView] = useState("Dashboard");
+  
+  // States for the form
   const [content, setContent] = useState("");
   const [priority, setPriority] = useState<Schema["Todo"]["type"]["priority"]>("MEDIUM");
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [lastLogin, setLastLogin] = useState("");
 
-  // 3. New Effect to fetch groups safely
-  /*useEffect(() => {
-    const checkGroups = async () => {
+  // 1. Clock Effect
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 2. Auth & Data Fetch
+  useEffect(() => {
+    const fetchUserDetails = async () => {
       try {
         const session = await fetchAuthSession();
         const groups = session.tokens?.accessToken?.payload?.['cognito:groups'] as string[] || [];
         setUserGroups(groups);
-      } catch (err) {
-        console.error("Error fetching groups:", err);
-      }
+        const attributes = await fetchUserAttributes();
+        setUserEmail(attributes.email || "Unknown");
+      } catch (err) { console.error(err); }
     };
-    
-    checkGroups();
-
+    fetchUserDetails();
     const sub = client.models.Todo.observeQuery().subscribe({
       next: ({ items }) => setTodos([...items]),
     });
     return () => sub.unsubscribe();
   }, []);
-  */
 
-  useEffect(() => {
-  const fetchUserDetails = async () => {
-    try {
-      // 1. Fetch Groups
-      const session = await fetchAuthSession();
-      const groups = session.tokens?.accessToken?.payload?.['cognito:groups'] as string[] || [];
-      setUserGroups(groups);
-
-      // 2. Fetch Email Attribute
-      const attributes = await fetchUserAttributes();
-      setUserEmail(attributes.email || "Unknown User");
-
-      // 3. Set Last Login (Using current session time for now)
-      // In a pro GRC app, we'd save this to a database on every login.
-      setLastLogin(new Date().toLocaleString());
-      
-    } catch (err) {
-      console.error("Error fetching user details:", err);
-    }
-  };
-  
-  fetchUserDetails();
-
-  const sub = client.models.Todo.observeQuery().subscribe({
-    next: ({ items }) => setTodos([...items]),
-  });
-  return () => sub.unsubscribe();
-}, []);
-
-
-
+  // Handlers
   async function createTodo(e: React.FormEvent) {
     e.preventDefault();
     if (!content) return;
     await client.models.Todo.create({ content, isDone: false, priority, dueDate });
     setContent("");
   }
-
-  async function deleteTodo(id: string) {
-    await client.models.Todo.delete({ id });
-  }
-
+  async function deleteTodo(id: string) { await client.models.Todo.delete({ id }); }
   async function toggleTodo(todo: Schema["Todo"]["type"]) {
     await client.models.Todo.update({ id: todo.id, isDone: !todo.isDone });
   }
 
   return (
     <Authenticator>
-      {({ signOut, user }) => (
-        <main style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto", fontFamily: "sans-serif" }}>
+      {({ signOut }) => (
+        <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gridTemplateRows: "70px 1fr", height: "100vh", fontFamily: "sans-serif" }}>
           
-          <div style={{ background: '#eee', padding: '10px', fontSize: '12px', marginBottom: '20px', borderRadius: '4px' }}>
-            <strong>Debug - Your Groups:</strong> {JSON.stringify(userGroups)}
-          </div>
-
-         {/*
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h1>My Tasks</h1>
-            <button onClick={signOut}>Sign out</button>
-          </div>
-          */}
-
-          <div style={{ borderBottom: '2px solid #047d95', marginBottom: '20px', paddingBottom: '10px' }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-         <h1>PCI Audit Portal</h1>
-         <button onClick={signOut}>Sign out</button>
-         </div>
-  
-        <div style={{ fontSize: '0.9rem', color: '#555' }}>
-            <p style={{ margin: '5px 0' }}>Logged in as: <strong>{userEmail}</strong></p>
-            <p style={{ margin: '5px 0' }}>Session Started: <strong>{lastLogin}</strong></p>
-            <p style={{ margin: '5px 0' }}>Roles: <strong>{userGroups.join(", ") || "No Roles Assigned"}</strong></p>
-         </div>
-</div>
-
-
-          {/* This will now reliably see the "ADMIN" string */}
-          {userGroups.includes("ADMIN") && (
-            <div style={{ backgroundColor: "#f3e5f5", padding: "15px", borderRadius: "8px", marginBottom: "20px", border: "1px solid purple" }}>
-              <strong style={{ color: "purple" }}>Admin Mode Active</strong>
-              <button style={{ marginLeft: "15px", backgroundColor: "purple", color: "white", border: "none", padding: "5px 10px", borderRadius: "4px" }}>
-                PCI AUDIT LOGS
-              </button>
+          {/* TOP TITLE BAR */}
+          <header style={{ 
+            gridColumn: "1 / -1", backgroundColor: "#047d95", color: "white", 
+            display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 20px",
+            boxShadow: "0 2px 5px rgba(0,0,0,0.2)", zIndex: 10 
+          }}>
+            <div style={{ fontSize: "0.8rem", width: "300px" }}>
+              <div>Logged in: <strong>{userEmail}</strong></div>
+              <div>Role: {userGroups.join(", ") || "GUEST"}</div>
             </div>
-          )}
-
-          <form onSubmit={createTodo} style={{ backgroundColor: "#f9f9f9", padding: "20px", borderRadius: "8px", marginBottom: "30px", display: "flex", flexDirection: "column", gap: "10px", border: "1px solid #eee" }}>
-            <input placeholder="What needs doing?" value={content} onChange={(e) => setContent(e.target.value)} style={{ padding: "10px", borderRadius: "4px", border: "1px solid #ccc" }} />
-            <div style={{ display: "flex", gap: "10px" }}>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as any)} style={{ flex: 1, padding: "8px" }}>
-                <option value="LOW">Low Priority</option>
-                <option value="MEDIUM">Medium Priority</option>
-                <option value="HIGH">High Priority</option>
-              </select>
-              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ flex: 1, padding: "8px" }} />
+            
+            <h2 style={{ margin: 0 }}>PCI-DSS Audit Portal</h2>
+            
+            <div style={{ fontSize: "0.8rem", textAlign: "right", width: "300px" }}>
+              <div>{time.toLocaleDateString()} {time.toLocaleTimeString()}</div>
+              <div>{Intl.DateTimeFormat().resolvedOptions().timeZone}</div>
             </div>
-            <button type="submit" style={{ padding: "10px", backgroundColor: "#047d95", color: "white", border: "none", borderRadius: "4px", fontWeight: "bold" }}>Add Task</button>
-          </form>
+          </header>
 
-          <div style={{ marginBottom: "20px" }}>
-            <input type="text" placeholder="Search tasks..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #ddd" }} />
-          </div>
+          {/* VERTICAL NAVBAR */}
+          <nav style={{ backgroundColor: "#232f3e", color: "white", padding: "20px 10px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <button onClick={() => setCurrentView("Dashboard")} style={navBtnStyle}>📊 Dashboard</button>
+            
+            {(userGroups.includes("ADMIN") || userGroups.includes("ISA")) && (
+              <button onClick={() => setCurrentView("Evidence")} style={navBtnStyle}>📁 Evidence Library</button>
+            )}
+            
+            {userGroups.includes("ADMIN") && (
+              <button onClick={() => setCurrentView("Settings")} style={navBtnStyle}>⚙️ System Settings</button>
+            )}
+            
+            <div style={{ marginTop: "auto" }}>
+              <button onClick={signOut} style={{ ...navBtnStyle, backgroundColor: "#d9534f" }}>Logout</button>
+            </div>
+          </nav>
 
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {todos
-              .filter((todo) => todo.content?.toLowerCase().includes(searchQuery.toLowerCase()))
-              .slice()
-              .sort((a, b) => {
-                if (a.isDone !== b.isDone) return a.isDone ? 1 : -1;
-                const weights: Record<string, number> = { HIGH: 1, MEDIUM: 2, LOW: 3 };
-                const weightA = weights[a.priority as string] || 2;
-                const weightB = weights[b.priority as string] || 2;
-                if (weightA !== weightB) return weightA - weightB;
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-              })
-              .map((todo) => (
-                <li key={todo.id} style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "15px", marginBottom: "15px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <input type="checkbox" checked={todo.isDone || false} onChange={() => toggleTodo(todo)} />
-                      <span style={{ fontWeight: "bold", textDecoration: todo.isDone ? "line-through" : "none" }}>{todo.content}</span>
-                    </div>
-                    <button onClick={() => deleteTodo(todo.id)} style={{ color: "red", border: "none", background: "none" }}>Delete</button>
-                  </div>
-                  <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "10px" }}>
-                    <strong>{todo.priority}</strong> • Due: {todo.dueDate} • Added: {new Date(todo.createdAt).toLocaleDateString()}
-                  </div>
-                </li>
-              ))}
-          </ul>
-        </main>
+          {/* MAIN DISPLAY PAGE */}
+          <main style={{ backgroundColor: "#f4f7f6", overflowY: "auto", padding: "20px" }}>
+            
+            {/* BREADCRUMBS */}
+            <div style={{ fontSize: "0.8rem", color: "#666", marginBottom: "10px" }}>
+              Home / {currentView}
+            </div>
+            <h2 style={{ marginTop: 0 }}>{currentView}</h2>
+
+            {/* PAGE CONTENT: Only show Todo list on Dashboard */}
+            {currentView === "Dashboard" ? (
+              <div>
+                {/* SUMMARY CARDS */}
+                <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
+                  <div style={cardStyle}><strong>Total:</strong> {todos.length}</div>
+                  <div style={cardStyle}><strong>Compliant:</strong> {todos.filter(t=>t.isDone).length}</div>
+                </div>
+
+                {/* SEARCH & FORM (Simplified for space) */}
+                <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+                   <input placeholder="Filter requirements..." value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} style={{ flex: 1, padding: "10px" }}/>
+                </div>
+
+                {/* LIST SCROLL AREA */}
+                <ul style={{ listStyle: "none", padding: 0 }}>
+                  {todos
+                    .filter(t => t.content?.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .slice().sort((a,b) => (a.isDone === b.isDone ? 0 : a.isDone ? 1 : -1))
+                    .map(todo => (
+                      <li key={todo.id} style={{ backgroundColor: "white", padding: "15px", borderRadius: "8px", marginBottom: "10px", border: "1px solid #ddd", display: "flex", justifyContent: "space-between" }}>
+                        <div>
+                          <strong>{todo.content}</strong>
+                          <div style={{ fontSize: "0.7rem", color: "#888" }}>Priority: {todo.priority} | Due: {todo.dueDate}</div>
+                        </div>
+                        <div>
+                           {(userGroups.includes("ADMIN") || userGroups.includes("ISA")) && (
+                             <input type="checkbox" checked={todo.isDone || false} onChange={() => toggleTodo(todo)} />
+                           )}
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ) : (
+              <div style={{ padding: "40px", textAlign: "center", color: "#999" }}>
+                {currentView} Content coming soon...
+              </div>
+            )}
+          </main>
+        </div>
       )}
     </Authenticator>
   );
 }
+
+// STYLES
+const navBtnStyle = {
+  padding: "12px", textAlign: "left" as "left", backgroundColor: "transparent", 
+  color: "white", border: "1px solid #3e4b5b", borderRadius: "4px", cursor: "pointer", width: "100%"
+};
+
+const cardStyle = {
+  flex: 1, padding: "20px", backgroundColor: "white", borderRadius: "8px", 
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)", textAlign: "center" as "center"
+};
+
+
 
