@@ -8,6 +8,8 @@ const schema = a.schema({
   Todo: a.model({
     content: a.string(),
     isDone: a.boolean(),
+    dueDate: a.date(), // Adds a date field
+    priority: a.enum(['LOW', 'MEDIUM', 'HIGH']), // Adds a dropdown-style field
   }).authorization((allow) => [allow.owner()]),
 });
 
