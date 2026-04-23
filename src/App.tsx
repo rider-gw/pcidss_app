@@ -1,4 +1,74 @@
 // @ts-nocheck
+import React, { useState } from "react";
+import { Authenticator } from "@aws-amplify/ui-react";
+import "@aws-amplify/ui-react/styles.css";
+
+export default function App() {
+  const [currentView, setCurrentView] = useState("Home");
+
+  const navBtnStyle = (view: string) => ({
+    padding: "12px",
+    textAlign: "left" as const,
+    backgroundColor: currentView === view ? "#3e4b5b" : "transparent",
+    color: "white",
+    border: "1px solid #3e4b5b",
+    borderRadius: "4px",
+    cursor: "pointer",
+    width: "100%",
+    marginBottom: "5px"
+  });
+
+  const renderContent = () => {
+    switch (currentView) {
+      case "Home":
+        return <div><h2>Home</h2><p>Welcome to the PCI DSS Audit GRC application.</p></div>;
+      case "Asset Inventory":
+        return <div><h2>Asset Inventory</h2><p>Manage your assets here.</p></div>;
+      case "PCI Controls":
+        return <div><h2>PCI Controls</h2><p>View and manage PCI controls.</p></div>;
+      case "Evidence":
+        return <div><h2>Evidence</h2><p>Upload and manage evidence.</p></div>;
+      case "Audit Report":
+        return <div><h2>Audit Report</h2><p>Generate and view audit reports.</p></div>;
+      case "Settings":
+        return <div><h2>Settings</h2><p>Application settings.</p></div>;
+      default:
+        return <div><h2>Home</h2><p>Welcome to the PCI DSS Audit GRC application.</p></div>;
+    }
+  };
+
+  return (
+    <Authenticator>
+      {({ signOut }) => (
+        <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gridTemplateRows: "70px 1fr 30px", height: "100vh", fontFamily: "sans-serif" }}>
+          
+          <header style={{ gridColumn: "1 / -1", backgroundColor: "#047d95", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 20px" }}>
+            <div style={{ fontSize: "0.8rem" }}><h2 style={{ margin: 0 }}>PCI-DSS Audit GRC</h2></div>
+            <button onClick={signOut} style={{ padding: "8px 16px", background: "#d9534f", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Sign Out</button>
+          </header>
+
+          <nav style={{ backgroundColor: "#2c3e50", padding: "20px", color: "white" }}>
+            <h3>Navigation</h3>
+            <button style={navBtnStyle("Home")} onClick={() => setCurrentView("Home")}>Home</button>
+            <button style={navBtnStyle("Asset Inventory")} onClick={() => setCurrentView("Asset Inventory")}>Asset Inventory</button>
+            <button style={navBtnStyle("PCI Controls")} onClick={() => setCurrentView("PCI Controls")}>PCI Controls</button>
+            <button style={navBtnStyle("Evidence")} onClick={() => setCurrentView("Evidence")}>Evidence</button>
+            <button style={navBtnStyle("Audit Report")} onClick={() => setCurrentView("Audit Report")}>Audit Report</button>
+            <button style={navBtnStyle("Settings")} onClick={() => setCurrentView("Settings")}>Settings</button>
+          </nav>
+
+          <main style={{ padding: "20px", backgroundColor: "#ecf0f1" }}>
+            {renderContent()}
+          </main>
+
+          <footer style={{ gridColumn: "1 / -1", backgroundColor: "#34495e", color: "white", textAlign: "center", padding: "10px" }}>
+            <div style={{ fontSize: "0.6rem" }}>AUDIT CYCLE 2026 - SECURE PROTOTYPE</div>
+          </footer>
+        </div>
+      )}
+    </Authenticator>
+  );
+}// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { generateClient } from "aws-amplify/data";
