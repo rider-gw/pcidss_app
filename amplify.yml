@@ -3,6 +3,7 @@ frontend:
   phases:
     preBuild:
       commands:
+        - git submodule update --init --recursive
         - cd my-amplify-app
         - npm install
     build:
