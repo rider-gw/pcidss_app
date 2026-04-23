@@ -26,7 +26,7 @@ export default function App() {
   const [lastLoginDisplay, setLastLoginDisplay] = useState("First Session");
   const [time, setTime] = useState(new Date());
   const [currentView, setCurrentView] = useState("Dashboard");
-  const [dbStatus, setDbStatus] = useState("");
+  // const [dbStatus, setDbStatus] = useState("");
 
   const [newAssetId, setNewAssetId] = useState("");
   const [newAssetName, setNewAssetName] = useState("");
@@ -220,36 +220,36 @@ export default function App() {
     return assignment.length > 0 ? assignment[0].groupName || "VIEWER" : "VIEWER";
   }
 
-  async function checkDBStatus() {
-    try {
-      setDbStatus("Checking database...");
-      const assetRes = await client.models.Asset.list();
-      const controlRes = await client.models.PCIControl.list();
-      const userRes = await client.models.UserProfile.list();
-      const auditRes = await client.models.AuditLog.list();
-      const groupRes = await client.models.UserGroupAssignment.list();
-      const assetCount = assetRes.data.length;
-      const controlCount = controlRes.data.length;
-      const userCount = userRes.data.length;
-      const auditCount = auditRes.data.length;
-      const groupCount = groupRes.data.length;
-      setDbStatus(`DB Connected. Records: Assets(${assetCount}), Controls(${controlCount}), Users(${userCount}), AuditLogs(${auditCount}), Groups(${groupCount})`);
-    } catch (err) {
-      console.error(err);
-      setDbStatus(`DB Error: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-  }
+  // async function checkDBStatus() {
+  //   try {
+  //     setDbStatus("Checking database...");
+  //     const assetRes = await client.models.Asset.list();
+  //     const controlRes = await client.models.PCIControl.list();
+  //     const userRes = await client.models.UserProfile.list();
+  //     const auditRes = await client.models.AuditLog.list();
+  //     const groupRes = await client.models.UserGroupAssignment.list();
+  //     const assetCount = assetRes.data.length;
+  //     const controlCount = controlRes.data.length;
+  //     const userCount = userRes.data.length;
+  //     const auditCount = auditRes.data.length;
+  //     const groupCount = groupRes.data.length;
+  //     setDbStatus(`DB Connected. Records: Assets(${assetCount}), Controls(${controlCount}), Users(${userCount}), AuditLogs(${auditCount}), Groups(${groupCount})`);
+  //   } catch (err) {
+  //     console.error(err);
+  //     setDbStatus(`DB Error: ${err instanceof Error ? err.message : "Unknown error"}`);
+  //   }
+  // }
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     initializeUser();
-    const subs = [
-      client.models.UserProfile.observeQuery().subscribe({ next: ({ items }) => setUserProfiles([...items]) }),
-      client.models.Asset.observeQuery().subscribe({ next: ({ items }) => setAssets([...items]) }),
-      client.models.UserGroupAssignment.observeQuery().subscribe({ next: ({ items }) => setUserGroupAssignments([...items]) }),
-      client.models.PCIControl.observeQuery().subscribe({ next: ({ items }) => setPciControls([...items]) }),
-    ];
-    return () => { clearInterval(timer); subs.forEach(s => s.unsubscribe()); };
+    // const subs = [
+    //   client.models.UserProfile.observeQuery().subscribe({ next: ({ items }) => setUserProfiles([...items]) }),
+    //   client.models.Asset.observeQuery().subscribe({ next: ({ items }) => setAssets([...items]) }),
+    //   client.models.UserGroupAssignment.observeQuery().subscribe({ next: ({ items }) => setUserGroupAssignments([...items]) }),
+    //   client.models.PCIControl.observeQuery().subscribe({ next: ({ items }) => setPciControls([...items]) }),
+    // ];
+    return () => { clearInterval(timer); /* subs.forEach(s => s.unsubscribe()); */ };
   }, []);
 
   const navBtnStyle = (view: string) => ({
@@ -421,8 +421,8 @@ export default function App() {
               <div>
                 <h2>Audit Readiness</h2>
                 <p>Overview of PCI controls and compliance status.</p>
-                <button onClick={checkDBStatus} style={{ padding: "10px 20px", background: "#047d95", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>DB Check</button>
-                {dbStatus && <p style={{ marginTop: "10px", fontSize: "0.9rem", color: "#333" }}>{dbStatus}</p>}
+                {/* <button onClick={checkDBStatus} style={{ padding: "10px 20px", background: "#047d95", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>DB Check</button>
+                {dbStatus && <p style={{ marginTop: "10px", fontSize: "0.9rem", color: "#333" }}>{dbStatus}</p>} */}
               </div>
             )}
 
