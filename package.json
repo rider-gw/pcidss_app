@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.15.3",
-    "@rolldown/binding-win32-x64-msvc": "^1.0.0-rc.15",
+    "@aws-sdk/client-dynamodb": "^3.1035.0",
     "aws-amplify": "^6.16.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -29,7 +29,6 @@
     "@vitejs/plugin-react": "^6.0.1",
     "aws-cdk-lib": "^2.234.1",
     "constructs": "^10.6.0",
-    "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
